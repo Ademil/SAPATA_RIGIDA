@@ -1,0 +1,1 @@
+# SAPATA_RIGIDA
