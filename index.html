@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APavan_Dimensionamento de Sapata Rígida - NBR 6118</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .canvas-container { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-12">
+    <header class="bg-blue-700 text-white p-6 shadow-lg mb-8 no-print">
+        <div class="container mx-auto">
+            <h1 class="text-2xl font-bold italic">APavan_Engenharia de Fundações: Sapata Rígida Isolada</h1>
+            <p class="text-blue-100 text-sm">Dimensionamento conforme NBR 6118 e roteiro técnico</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Coluna de Inputs -->
+        <section class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-200 no-print">
+            <h2 class="text-lg font-semibold mb-4 border-b pb-2 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                Dados de Entrada
+            </h2>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">Carga Nk (kN)</label>
+                        <input type="number" id="nk" value="300" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">σ solo adm (MPa)</label>
+                        <input type="number" id="sigma_adm" value="0.20" step="0.01" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="p-3 bg-blue-50 rounded-lg">
+                    <p class="text-sm font-semibold text-blue-800 mb-2">Seção do Pilar (cm)</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-600">Lado a</label>
+                            <input type="number" id="pilar_a" value="30" class="w-full border rounded p-2">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600">Lado b</label>
+                            <input type="number" id="pilar_b" value="20" class="w-full border rounded p-2">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">fck (MPa)</label>
+                        <select id="fck" class="w-full border rounded p-2">
+                            <option value="20" selected>20</option>
+                            <option value="25">25</option>
+                            <option value="30">30</option>
+                            <option value="35">35</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">Aço CA-50</label>
+                        <input type="text" value="500 MPa" disabled class="w-full border rounded p-2 bg-gray-100 cursor-not-allowed">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">Ø armadura (mm)</label>
+                        <select id="diametro" class="w-full border rounded p-2">
+                            <option value="8">8.0</option>
+                            <option value="10" selected>10.0</option>
+                            <option value="12.5">12.5</option>
+                            <option value="16">16.0</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 uppercase">Cobrimento (cm)</label>
+                        <input type="number" id="cobrimento" value="4" class="w-full border rounded p-2">
+                    </div>
+                </div>
+
+                <button onclick="calcularTudo()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors shadow-md mt-4">
+                    CALCULAR E DETALHAR
+                </button>
+            </div>
+        </section>
+
+        <!-- Coluna de Resultados -->
+        <section class="lg:col-span-2 space-y-6">
+            <!-- Memorial de Cálculo -->
+            <div id="resultados" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hidden">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center justify-between">
+                    <span>Memorial de Cálculo</span>
+                    <span class="text-sm font-normal text-gray-400">Ref: NBR 6118</span>
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div>
+                        <h3 class="font-bold text-blue-700 text-sm uppercase mb-3 border-b">1. Geometria</h3>
+                        <ul class="text-sm space-y-2" id="geo_list"></ul>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-blue-700 text-sm uppercase mb-3 border-b">2. Verificação do Concreto</h3>
+                        <ul class="text-sm space-y-2" id="conc_list"></ul>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="font-bold text-blue-700 text-sm uppercase mb-3 border-b">3. Armaduras Calculadas</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-2 border">Direção</th>
+                                    <th class="p-2 border">As nec (cm²)</th>
+                                    <th class="p-2 border">Detalhamento</th>
+                                </tr>
+                            </thead>
+                            <tbody id="armadura_body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Desenhos -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="canvas-container p-4">
+                        <p class="text-xs font-bold text-gray-400 mb-2 uppercase text-center">Planta Baixa (cm)</p>
+                        <canvas id="plantaCanvas" width="350" height="300" class="mx-auto w-full"></canvas>
+                    </div>
+                    <div class="canvas-container p-4">
+                        <p class="text-xs font-bold text-gray-400 mb-2 uppercase text-center">Corte Longitudinal (cm)</p>
+                        <canvas id="corteCanvas" width="350" height="300" class="mx-auto w-full"></canvas>
+                    </div>
+                </div>
+
+                <!-- Tabela de Aço -->
+                <div class="mt-8">
+                    <h3 class="font-bold text-blue-700 text-sm uppercase mb-3 border-b">Tabela de Aço (Resumo)</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-center border">
+                            <thead class="bg-gray-800 text-white">
+                                <tr>
+                                    <th class="p-2">Pos</th>
+                                    <th class="p-2">Ø (mm)</th>
+                                    <th class="p-2">Quant.</th>
+                                    <th class="p-2">Comp. (cm)</th>
+                                    <th class="p-2">Total (m)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela_aco_body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end no-print">
+                    <button onclick="window.print()" class="flex items-center text-gray-600 hover:text-blue-600 font-semibold px-4 py-2 bg-gray-100 rounded-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        Gerar PDF / Imprimir
+                    </button>
+                </div>
+            </div>
+
+            <!-- Placeholder -->
+            <div id="placeholder" class="bg-white p-12 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400">
+                <svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a2 2 0 012-2h14a2 2 0 012 2v5"></path></svg>
+                <p class="text-center font-medium">Preencha os dados e clique em "Calcular e Detalhar"<br>para visualizar o dimensionamento.</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        function calcularTudo() {
+            try {
+                // 1. Coleta de Dados
+                const Nk = parseFloat(document.getElementById('nk').value);
+                const sigma_adm_MPa = parseFloat(document.getElementById('sigma_adm').value);
+                const a = parseFloat(document.getElementById('pilar_a').value);
+                const b = parseFloat(document.getElementById('pilar_b').value);
+                const fck = parseFloat(document.getElementById('fck').value);
+                const phi_mm = parseFloat(document.getElementById('diametro').value);
+                const cobrimento = parseFloat(document.getElementById('cobrimento').value);
+
+                // 2. Conversões de Unidade
+                const sigma_adm = sigma_adm_MPa / 10; // MPa para kN/cm²
+                const fcd = (fck / 1.4) / 10; // MPa para kN/cm²
+                const phi = phi_mm / 10; // mm para cm
+                const fyd = 50 / 1.15; // CA-50 (50kN/cm²) para kN/cm²
+                const Nd = 1.4 * Nk; // kN
+
+                // 3. Geometria (Área da Base)
+                // Estima-se peso próprio da sapata como 5% da carga aplicada
+                const S = (1.05 * Nk) / sigma_adm; // cm²
+                
+                // Dimensões A e B mantendo a proporção do pilar
+                let A_calc = Math.sqrt(S * (a / b));
+                let B_calc = Math.sqrt(S * (b / a));
+
+                // Arredondar para múltiplo de 5 cm superior
+                const A = Math.ceil(A_calc / 5) * 5;
+                const B = Math.ceil(B_calc / 5) * 5;
+
+                // Alturas h e h_o (Rigidez)
+                const h_calc_A = (A - a) / 4;
+                const h_calc_B = (B - b) / 4;
+                let h = Math.max(h_calc_A, h_calc_B);
+                h = Math.ceil(h / 5) * 5; 
+                if (h < 25) h = 25; // h mínimo prático
+
+                let ho = Math.max(h / 3, 20); // ho deve ser >= h/3 e >= 20cm
+                ho = Math.ceil(ho / 5) * 5;
+
+                // 4. Verificação das Tensões no Concreto
+                const d = h - cobrimento - (phi/2); // Altura útil
+                const Z = 0.85 * d; // Braço de alavanca (aproximado d-x)
+
+                const sigma_d = Nd / (a * b);
+                const limite_fcd = 0.20 * fcd;
+                const status_concreto = sigma_d <= limite_fcd 
+                    ? `<span class="text-green-600 font-bold">OK (${sigma_d.toFixed(2)} ≤ ${limite_fcd.toFixed(2)})</span>` 
+                    : `<span class="text-red-600 font-bold">AVISO: Tensão elevada (${sigma_d.toFixed(2)} > ${limite_fcd.toFixed(2)})</span>`;
+
+                // 5. Armaduras (Método das Bielas)
+                const Asx = (Nd * (A - a)) / (8 * Z * fyd); // Direção Lado A (x)
+                const Asy = (Nd * (B - b)) / (8 * Z * fyd); // Direção Lado B (y)
+
+                const area_barra = Math.PI * Math.pow(phi / 2, 2);
+
+                let nx = Math.ceil(Asx / area_barra);
+                let ny = Math.ceil(Asy / area_barra);
+
+                // Espaçamentos
+                let sx = (B - 2 * cobrimento) / (nx > 1 ? nx - 1 : 1);
+                let sy = (A - 2 * cobrimento) / (ny > 1 ? ny - 1 : 1);
+
+                // Ajuste se espaçamento maior que 20cm
+                while (sx > 20) { nx++; sx = (B - 2 * cobrimento) / (nx - 1); }
+                while (sy > 20) { ny++; sy = (A - 2 * cobrimento) / (ny - 1); }
+
+                // 6. Tabela de Aço
+                const gancho = ho - cobrimento; // Simplificação conservadora do gancho
+                const comp_x = A - (2 * cobrimento) + (2 * gancho);
+                const comp_y = B - (2 * cobrimento) + (2 * gancho);
+
+                const total_m_x = (nx * comp_x) / 100;
+                const total_m_y = (ny * comp_y) / 100;
+
+                // --- ATUALIZAR UI ---
+                document.getElementById('placeholder').style.display = 'none';
+                document.getElementById('resultados').classList.remove('hidden');
+
+                // Preencher Memorial
+                document.getElementById('geo_list').innerHTML = `
+                    <li><strong>Área Necessária (S):</strong> ${S.toFixed(1)} cm²</li>
+                    <li><strong>Dimensões Base (A x B):</strong> ${A} cm x ${B} cm</li>
+                    <li><strong>Altura Total (h):</strong> ${h} cm</li>
+                    <li><strong>Altura da Borda (h₀):</strong> ${ho} cm</li>
+                    <li><strong>Altura Útil (d):</strong> ${d.toFixed(1)} cm</li>
+                `;
+
+                document.getElementById('conc_list').innerHTML = `
+                    <li><strong>Carga de Cálculo (Nd):</strong> ${Nd.toFixed(1)} kN</li>
+                    <li><strong>Tensão pilar (σd):</strong> ${sigma_d.toFixed(2)} kN/cm²</li>
+                    <li><strong>Limite NBR (0.2fcd):</strong> ${limite_fcd.toFixed(2)} kN/cm²</li>
+                    <li><strong>Verificação Bielas:</strong> ${status_concreto}</li>
+                    <li><strong>Braço alavanca (Z):</strong> ${Z.toFixed(1)} cm</li>
+                `;
+
+                document.getElementById('armadura_body').innerHTML = `
+                    <tr class="border-b">
+                        <td class="p-2 border font-medium">Dir. X (Lado ${A})</td>
+                        <td class="p-2 border">${Asx.toFixed(2)}</td>
+                        <td class="p-2 border text-blue-700 font-bold">${nx} N1 Ø${phi_mm} c/${sx.toFixed(0)}</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 border font-medium">Dir. Y (Lado ${B})</td>
+                        <td class="p-2 border">${Asy.toFixed(2)}</td>
+                        <td class="p-2 border text-blue-700 font-bold">${ny} N2 Ø${phi_mm} c/${sy.toFixed(0)}</td>
+                    </tr>
+                `;
+
+                document.getElementById('tabela_aco_body').innerHTML = `
+                    <tr class="border-b">
+                        <td class="p-2 border">N1</td>
+                        <td class="p-2 border">${phi_mm.toFixed(1)}</td>
+                        <td class="p-2 border">${nx}</td>
+                        <td class="p-2 border">${comp_x.toFixed(0)}</td>
+                        <td class="p-2 border font-semibold">${total_m_x.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 border">N2</td>
+                        <td class="p-2 border">${phi_mm.toFixed(1)}</td>
+                        <td class="p-2 border">${ny}</td>
+                        <td class="p-2 border">${comp_y.toFixed(0)}</td>
+                        <td class="p-2 border font-semibold">${total_m_y.toFixed(2)}</td>
+                    </tr>
+                `;
+
+                // Renderizar Desenhos
+                desenharPlanta(A, B, a, b, nx, ny);
+                desenharCorte(A, h, ho, a, cobrimento);
+
+            } catch (e) {
+                alert("Verifique os dados de entrada. Erro no cálculo: " + e.message);
+            }
+        }
+
+        function desenharPlanta(A, B, a, b, nx, ny) {
+            const canvas = document.getElementById('plantaCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Margens e Escala
+            const margin = 40;
+            const scaleX = (canvas.width - margin*2) / A;
+            const scaleY = (canvas.height - margin*2) / B;
+            const scale = Math.min(scaleX, scaleY);
+
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+
+            const drawA = A * scale;
+            const drawB = B * scale;
+            const draw_a = a * scale;
+            const draw_b = b * scale;
+
+            // Sapata
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(cx - drawA/2, cy - drawB/2, drawA, drawB);
+
+            // Pilar (Hachurado simulado com preenchimento)
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(cx - draw_a/2, cy - draw_b/2, draw_a, draw_b);
+            ctx.strokeRect(cx - draw_a/2, cy - draw_b/2, draw_a, draw_b);
+
+            // Linhas de armadura (representativas)
+            ctx.strokeStyle = '#ef4444'; // Vermelho para N1 (X)
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            let stepY = drawB / (ny + 1);
+            for(let i=1; i<=ny; i++) {
+                let y = (cy - drawB/2) + i*stepY;
+                ctx.moveTo(cx - drawA/2 + 5, y);
+                ctx.lineTo(cx + drawA/2 - 5, y);
+            }
+            ctx.stroke();
+
+            ctx.strokeStyle = '#3b82f6'; // Azul para N2 (Y)
+            ctx.beginPath();
+            let stepX = drawA / (nx + 1);
+            for(let i=1; i<=nx; i++) {
+                let x = (cx - drawA/2) + i*stepX;
+                ctx.moveTo(x, cy - drawB/2 + 5);
+                ctx.lineTo(x, cy + drawB/2 - 5);
+            }
+            ctx.stroke();
+
+            // Cotas
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(`A = ${A}`, cx, cy + drawB/2 + 20);
+            
+            ctx.save();
+            ctx.translate(cx - drawA/2 - 20, cy);
+            ctx.rotate(-Math.PI/2);
+            ctx.fillText(`B = ${B}`, 0, 0);
+            ctx.restore();
+        }
+
+        function desenharCorte(A, h, ho, a, cobrimento) {
+            const canvas = document.getElementById('corteCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const margin = 50;
+            // Altura total para visualização: h + pedaço do pilar
+            const totalH = h + 40; 
+            const scale = Math.min((canvas.width - margin*2) / A, (canvas.height - margin*2) / totalH);
+
+            const cx = canvas.width / 2;
+            const baseY = canvas.height - margin; // Linha de fundo
+
+            const drawA = A * scale;
+            const drawH = h * scale;
+            const drawHo = ho * scale;
+            const draw_a = a * scale;
+            const drawPilarExt = 40 * scale;
+
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            // Fundo
+            ctx.moveTo(cx - drawA/2, baseY);
+            ctx.lineTo(cx + drawA/2, baseY);
+            // Lateral direita
+            ctx.lineTo(cx + drawA/2, baseY - drawHo);
+            // Rampa direita
+            ctx.lineTo(cx + draw_a/2, baseY - drawH);
+            // Pilar direito
+            ctx.lineTo(cx + draw_a/2, baseY - drawH - drawPilarExt);
+            // Topo pilar (aberto)
+            ctx.moveTo(cx - draw_a/2, baseY - drawH - drawPilarExt);
+            // Pilar esquerdo
+            ctx.lineTo(cx - draw_a/2, baseY - drawH);
+            // Rampa esquerda
+            ctx.lineTo(cx - drawA/2, baseY - drawHo);
+            // Lateral esquerda
+            ctx.lineTo(cx - drawA/2, baseY);
+            ctx.stroke();
+
+            // Armadura inferior
+            const drawCob = cobrimento * scale;
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            // Gancho Esq
+            ctx.moveTo(cx - drawA/2 + drawCob, baseY - drawHo + drawCob);
+            ctx.lineTo(cx - drawA/2 + drawCob, baseY - drawCob);
+            // Fio principal
+            ctx.lineTo(cx + drawA/2 - drawCob, baseY - drawCob);
+            // Gancho Dir
+            ctx.lineTo(cx + drawA/2 - drawCob, baseY - drawHo + drawCob);
+            ctx.stroke();
+
+            // Cotas
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px Inter';
+            ctx.textAlign = 'center';
+            // Cota A
+            ctx.fillText(`${A}`, cx, baseY + 20);
+            
+            // Cota h
+            ctx.textAlign = 'left';
+            ctx.fillText(`h=${h}`, cx + draw_a/2 + 10, baseY - drawH/2);
+            // Cota ho
+            ctx.fillText(`ho=${ho}`, cx + drawA/2 + 10, baseY - drawHo/2);
+        }
+    </script>
+</body>
+</html>
